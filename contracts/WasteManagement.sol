@@ -15,11 +15,7 @@ contract WasteManagementSystem {
 
     struct ComplaintEntry {
         uint id;
-        address userId;
-        uint date; // UNIX timestamp
-        string area;
-        string description;
-        Status status;
+      
         string responseIPFSHash; // IPFS hash for response data
     }
 
@@ -34,7 +30,7 @@ contract WasteManagementSystem {
         string outputImageIPFSHash; // IPFS hash for output image
     }
 
-    enum Status { Discarded, Pending, Resolved }
+    // enum Status { Discarded, Pending, Resolved }
     enum UserRole { DistrictAdmin, RecyclableAdmin, LandfillAdmin, User }
 
     address public owner;
@@ -49,7 +45,7 @@ contract WasteManagementSystem {
     uint private inputOutputEntryId = 1;
 
     event WasteCollectionRecorded(uint id, address districtAdmin, uint totalAmount, string area);
-    event ComplaintRecorded(uint id, address userId, string area, Status status);
+    // event ComplaintRecorded(uint id, address userId, string area, Status status);
     event InputOutputRecorded(uint id, uint quantityReceived, string area);
     event IPFSHashStored(string ipfsHash);
 
@@ -69,11 +65,7 @@ contract WasteManagementSystem {
         wasteCollectionEntryId++;
     }
 
-    function fileComplaint(uint _date, string memory _area, string memory _description, string memory _responseIPFSHash) public onlyRole(UserRole.User) {
-        complaintEntries[complaintEntryId] = ComplaintEntry(complaintEntryId, msg.sender, _date, _area, _description, Status.Pending, _responseIPFSHash);
-        emit ComplaintRecorded(complaintEntryId, msg.sender, _area, Status.Pending);
-        complaintEntryId++;
-    }
+  
 
     function recordInputOutput(uint _inputDate, uint _outputDate, uint _quantityReceived, uint _recyclablePercentage, string memory _area, string memory _inputImageIPFSHash, string memory _outputImageIPFSHash) public {
         inputOutputEntries[inputOutputEntryId] = InputOutputEntry(inputOutputEntryId, _inputDate, _outputDate, _quantityReceived, _recyclablePercentage, _area, _inputImageIPFSHash, _outputImageIPFSHash);
@@ -105,16 +97,6 @@ contract WasteManagementSystem {
         return inputOutputEntries[_id];
     }
 
-    // Function to update the status of a complaint
-    function updateComplaintStatus(uint _id, Status _status, string memory _responseIPFSHash) public {
-        require(_id < complaintEntryId, "Complaint entry does not exist.");
-        ComplaintEntry storage complaint = complaintEntries[_id];
-        // Only allow updates by the district admin or the user who filed the complaint
-        require(userRoles[msg.sender] == UserRole.DistrictAdmin || msg.sender == complaint.userId, "Unauthorized to update complaint status.");
-        complaint.status = _status;
-        complaint.responseIPFSHash = _responseIPFSHash;
-        emit ComplaintRecorded(_id, complaint.userId, complaint.area, _status);
-    }
 
     // Additional logic to assign roles to users
     function assignUserRole(address _user, UserRole _role) public {

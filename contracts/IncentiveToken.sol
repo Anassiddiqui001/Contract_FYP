@@ -5,6 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract RecysenseIncentiveToken is ERC20, Ownable {
+
+    
     
     struct Subdivision {
         uint256 totalAllocation;
@@ -14,11 +16,10 @@ contract RecysenseIncentiveToken is ERC20, Ownable {
     mapping(string => Subdivision) public subdivisions;
     mapping(address => uint256) public lastClaimMonth; // Tracks the last month a user claimed tokens
     mapping(string => string) public subdivisionToDivision; // Maps subdivision to division
-    uint256 public totalSupplyCap; // Maximum supply of tokens
+    uint256 public totalSupplyCap=1000000000000000000; // Maximum supply of tokens
     mapping(address => bool) private districtAdmins; // Mapping to track district admins
 
-    constructor(uint256 _totalSupplyCap) ERC20("RecysenseIncentiveToken", "RIT") Ownable(msg.sender) {
-        totalSupplyCap = _totalSupplyCap;
+    constructor() ERC20("RecysenseIncentiveToken", "RIT") Ownable(msg.sender) {
         districtAdmins[msg.sender] = true; // Set deployer as the initial district admin
     }
 

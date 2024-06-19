@@ -1,3 +1,7 @@
+/**
+ *Submitted for verification at Etherscan.io on 2024-03-04
+*/
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
@@ -60,11 +64,13 @@ contract WasteManagementSystem {
         DistrictAdmin,
         RecyclableAdmin,
         LandfillAdmin,
-        User
+        User,
+        None
     }
 
     // Variables
-    address public owner;
+    mapping(address => bool) public owners; // Mapping to store owners
+    mapping(address => mapping(UserRole => bool)) public userRoles; // Mapping to store user roles
 
     // Reports Ids
     uint256 private weeklyReportId = 1;
@@ -83,9 +89,6 @@ contract WasteManagementSystem {
 
     // Reports Mappings
     mapping(uint256 => WeeklyReport) public weeklyReports;
-
-    // Roles Mappings
-    mapping(address => UserRole) public userRoles;
 
     // Events
     event WasteCollectionRecorded(
@@ -119,17 +122,32 @@ contract WasteManagementSystem {
         string reportType
     );
 
+    modifier onlyOwner() {
+        require(
+            owners[msg.sender],
+            "Only the contract owner can perform this action."
+        );
+        _;
+    }
+
     modifier onlyRole(UserRole role) {
         require(
-            userRoles[msg.sender] == role,
+            userRoles[msg.sender][role],
             "Unauthorized action for user role."
         );
         _;
     }
 
-    constructor() {
-        owner = msg.sender;
-        userRoles[owner] = UserRole.DistrictAdmin;
+    constructor(address[] memory _owners) {
+        for (uint256 i = 0; i < _owners.length; i++) {
+            owners[_owners[i]] = true;
+            userRoles[_owners[i]][UserRole.DistrictAdmin] = true;
+        }
+    }
+
+    // Function to add or remove an owner
+    function setOwner(address _owner, bool _status) public onlyOwner {
+        owners[_owner] = _status;
     }
 
     // District Admin
@@ -231,7 +249,7 @@ contract WasteManagementSystem {
     }
 
     // Add weekly report function
-    function addWeeklyReport(uint _date, string memory _ipfsHash, string memory _reportType)
+    function addWeeklyReport(uint256 _date, string memory _ipfsHash, string memory _reportType)
         public
     {
         WeeklyReport memory newReport = WeeklyReport(
@@ -254,10 +272,10 @@ contract WasteManagementSystem {
     // Additional logic to assign roles to users
     function assignUserRole(address _user, UserRole _role) public {
         require(
-            msg.sender == owner,
+            owners[msg.sender],
             "Only the contract owner can assign roles."
         );
-        userRoles[_user] = _role;
+        userRoles[_user][_role] = true;
     }
 
     // Function to allow district admins to update waste collection records (if necessary)
@@ -361,4 +379,23 @@ contract WasteManagementSystem {
         }
         return reports;
     }
+
+
+     // Getter function to get the role of a specific user by address
+    function getUserRole(address _user) public view returns (UserRole) {
+        if (userRoles[_user][UserRole.DistrictAdmin]) {
+            return UserRole.DistrictAdmin;
+        } else if (userRoles[_user][UserRole.RecyclableAdmin]) {
+            return UserRole.RecyclableAdmin;
+        } else if (userRoles[_user][UserRole.LandfillAdmin]) {
+            return UserRole.LandfillAdmin;
+        } else if (userRoles[_user][UserRole.User]) {
+            return UserRole.User;
+        } else {
+            return UserRole.None;
+        }
+    }
+
+
+
 }
